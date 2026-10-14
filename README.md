@@ -86,6 +86,4 @@ The three insights below answer exactly these three questions: *should I renovat
 > [!CAUTION]
 > `.env` contains passwords and must never be committed. It is already listed in `.gitignore`.
 
-## Author
 
-Maryam Sajedi, neuefische Data Science Bootcamp
