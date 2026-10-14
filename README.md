@@ -1,136 +1,91 @@
-# King County Housing EDA Project Template
+# King County House Sales: What Drives the Selling Price?
 
-This is the starter template for the Exploratory Data Analysis (EDA) project. You will work with the King County housing dataset (home sales in and around Seattle, USA), uncover what drives house prices, and turn your findings into insights and recommendations for a client you choose.
+Exploratory data analysis (EDA) of house sales in King County (Seattle area, USA) between **May 2014 and May 2015**, with insights and recommendations for a **seller**.
 
-## Learning Objectives
+## Client
 
-By the end of this repository, you should be able to:
+**Charles Christensen (Seller)**: wants to invest with big returns and is wondering about **renovation**, the right **neighborhood** and the best **timing**.
 
-- Connect to a PostgreSQL database from Python and load query results into a pandas DataFrame.
-- Frame an exploratory data analysis around clear research questions and hypotheses.
-- Clean and wrangle a real-world dataset by handling missing values, outliers, and feature transformations.
-- Explore distributions and the relationships between features and the target variable (price).
-- Translate your analysis into at least three insights and three client-specific recommendations.
-- Present your work to a non-technical audience.
+The three insights below answer exactly these three questions: *should I renovate?*, *where?* and *when?*
 
-## Learning Path
+## Key Insights
 
-Work through the files in order. Start with the assignment to understand the goal, follow the workflow as your guide, fetch the data, then run your analysis in the EDA notebook.
+| # | Question | Hypothesis | Result |
+|---|----------|------------|--------|
+| 1 | Does renovation increase the price? | **H1:** Renovated houses sell for a higher price per sqft. | Renovated houses look **24% more expensive** per sqft overall, but **only ~2.5% more** when compared within the same zipcode. Most of the difference comes from location, not renovation. |
+| 2 | Where in King County are houses more expensive? *(geographical)* | **H2:** The closer a house is to downtown Seattle, the higher its price per sqft. | **Supported.** Median price per sqft falls from **$369** (within 5 km of downtown) to **$168** (more than 30 km away), a drop of about **55%**. |
+| 3 | When is the best time to sell? | **H3:** Houses sold in spring get a higher price per sqft than in winter. | **Supported.** Spring median **$253/sqft** vs. winter **$235/sqft** (**+7.7%**). Peak in **April (~$260)**, lowest in **December (~$233)**. Spring is also the busiest season (most sales in May). |
 
-> [!TIP]
-> The data lives in the **eda** schema of the database and is split across two tables. Before fetching anything in code, connect with DBeaver and explore that schema: inspect both tables, check [**Column Names**](column_names.md) for what each field means, and work out how to join them. Once you have a working `JOIN`, use it as the query in [**03 - Fetching the Data**](03_fetching_the_data_eda.ipynb) to load the combined dataset into pandas.
+**Overall ranking of price drivers:** Location > Timing > Renovation.
 
-| File / Folder                                                   | Description                                                                                                              |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| [**01 - Assignment**](01_assignment.md)                      | The project brief: the dataset, your tasks, deliverables, and the list of clients to choose from.                        |
-| [**02 - Workflow**](02_workflow.md)                          | A recommended EDA workflow, from understanding and questioning the data through cleaning, relationships, and presenting. |
-| [**03 - Fetching the Data**](03_fetching_the_data_eda.ipynb) | Connect to the PostgreSQL database with psycopg2 and SQLAlchemy, then pull the data into a pandas DataFrame.             |
-| [**04 - EDA**](04_eda.ipynb)                                 | Starter notebook for your exploratory data analysis.                                                                     |
-| [**Column Names**](column_names.md)                          | Data dictionary describing each column in the King County housing dataset.                                               |
+## Recommendations
 
-### Additional Folders and Files
+1. **Invest in the right location.** Location is by far the strongest price driver. Houses close to downtown Seattle and in premium zipcodes (e.g. around Lake Washington) achieve up to about **2.2× more per sqft**. Price the house based on comparable houses in the same area.
+2. **Sell in spring (March to May).** Prices and buyer demand are highest then. Avoid listing in December or January.
+3. **Only renovate when it is cheap.** Renovation adds only about **2–3%** to the price per sqft within the same area, so a full renovation rarely pays off. Small, inexpensive improvements are the better choice.
 
-| File / Folder                           | Description                                                                                    |
-| --------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| [**Data**](data/)                    | Where you save the dataset CSV. The folder is tracked, but its data files are kept out of git. |
-| [**.env.example**](.env.example)     | Template for the database credentials. Copy it to `.env` and fill in your values.            |
-| [**pyproject.toml**](pyproject.toml) | Project configuration and dependencies.                                                        |
-| [**uv.lock**](uv.lock)               | Dependency lock file.                                                                          |
+## Repository Structure
+
+| File / Folder | Description |
+|---------------|-------------|
+| [**04_eda.ipynb**](04_eda.ipynb) | **Main notebook**: the full analysis with all three insights, charts, results and conclusions. Start here. |
+| [**03_fetching_the_data_eda.ipynb**](03_fetching_the_data_eda.ipynb) | Connects to the PostgreSQL database, runs the SQL join and saves the data as `data/eda.csv`. |
+| [**sql/king_county_join.sql**](sql/king_county_join.sql) | SQL query that joins the two database tables (house sales + house details). |
+| [**column_names.md**](column_names.md) | Data dictionary: what each column means. |
+| [**01_assignment.md**](01_assignment.md) | Original project brief, tasks and list of clients. |
+| [**02_workflow.md**](02_workflow.md) | Recommended EDA workflow. |
+| [**data/**](data/) | Location of the dataset (`eda.csv`). The data files are **not** pushed to GitHub. |
+| [**.env.example**](.env.example) | Template for the database credentials. |
+| [**pyproject.toml**](pyproject.toml) / [**uv.lock**](uv.lock) | Project dependencies. |
+
+## Data
+
+- **Source:** King County House Sales dataset, stored in the `eda` schema of the course PostgreSQL database (two tables: `king_county_house_sales` and `king_county_house_details`).
+- **Join:** each sale is joined to its house details with `sales.house_id = details.id` (see [the SQL file](sql/king_county_join.sql)).
+- **Size:** 21,597 sales, from 2 May 2014 to 27 May 2015.
+- **Main columns used:** `price`, `sqft_living`, `yr_renovated`, `zipcode`, `lat`, `long`, `date`.
+
+## Methodology
+
+1. Loaded and checked the data (types, missing values, date conversion).
+2. Created new features:
+   - `price_per_sqft` = `price / sqft_living`, so that houses of different sizes can be compared fairly.
+   - `renovated` = `True` if `yr_renovated` > 0.
+   - `dist_downtown_km` = straight-line distance to downtown Seattle (47.6062, −122.3321), calculated with the haversine formula.
+   - `month` and `season` from the sale date.
+3. Compared **medians** between groups (renovated vs. not, distance bands, months, seasons). Medians are used because house prices contain extreme values.
+4. Checked the renovation effect **within the same zipcode** to separate it from the location effect.
+
+## Assumptions and Limitations
+
+- `yr_renovated` = 0 or missing is treated as "never renovated". The data does not say *what* was renovated.
+- Downtown Seattle is assumed to be at latitude 47.6062, longitude −122.3321. Distances are straight-line, not driving distances.
+- Seasons: Winter = Dec–Feb, Spring = Mar–May, Summer = Jun–Aug, Fall = Sep–Nov.
+- The data covers only about **one year**, so the seasonal pattern is one year's result, not a proven rule.
+- The results show **relationships, not proof of cause and effect**.
 
 ## Setup
 
-> [!NOTE]
-> Throughout these steps, text in angle brackets like `<repo-name>` is a **placeholder**. Replace it, including the `< >` brackets, with your own value. For example, `cd <repo-name>` becomes `cd ds-eda-project-template`.
+1. Clone the repository and install the dependencies (creates a `.venv/` folder):
 
-### 1. Create the Repository from the Template
+   ```bash
+   git clone <repo-url>
+   cd <repo-name>
+   uv sync
+   ```
 
-Click **Use this template** on GitHub.
+2. Copy `.env.example` to `.env` and fill in the database credentials:
 
-When creating the repository:
+   ```bash
+   cp .env.example .env
+   ```
 
-- Set yourself as the **Owner**
-- Choose a repository name
-- Disable **Include all branches**
-- Click **Create repository**
-
-> [!IMPORTANT]
-> If you are working in pairs or groups, only **one person** should complete this step.
----
-
-### 2. Add Collaborators (Pairs/Groups Only)
-
-If working with teammates:
-
-1. Open the repository on GitHub
-2. Go to **Settings → Collaborators**
-3. Add your teammates as collaborators
-4. Share the repository link with your team
-
-Teammates should accept the invitation before continuing.
-
----
-
-### 3. Clone the Repository
-
-Copy the SSH URL from the **Code** button on GitHub, then run:
-
-```bash
-git clone <copied-ssh-url>
-```
-
-The copied SSH URL will look like `git@github.com:<your-username>/<repo-name>.git`.
-
----
-
-### 4. Move into the Project Folder and Install Dependencies
-
-This installs all dependencies and creates a virtual environment in `.venv/`.
-
-```bash
-cd <repo-name>
-uv sync
-```
-
-> [!TIP]
-> Need a library that is not installed yet (for example a mapping)? Add it with `uv add <package-name>`. This updates `pyproject.toml` and `uv.lock` and installs it into your `.venv`. Commit both files; teammates then run uv sync after pulling to get the same environment.
-
----
-
-### 5. Set up your Database Credentials
-
-The data-fetching notebook reads the database connection details from a `.env` file. Copy the template and fill in your own values:
-
-```bash
-cp .env.example .env
-```
-
-Open `.env` and replace the placeholders with the credentials for the King County housing database (the same ones you use in DBeaver). These values feed [**03 - Fetching the Data**](03_fetching_the_data_eda.ipynb).
+3. Run [03_fetching_the_data_eda.ipynb](03_fetching_the_data_eda.ipynb) to download the data into `data/eda.csv`.
+4. Open [04_eda.ipynb](04_eda.ipynb) in VS Code, select the `.venv` kernel and click **Run All**.
 
 > [!CAUTION]
-> `.env` holds secrets and must never be committed. It is already listed in `.gitignore`. Only `.env.example`, with placeholder values, belongs in the repository.
+> `.env` contains passwords and must never be committed. It is already listed in `.gitignore`.
 
----
+## Author
 
-### 6. Open the Notebooks
-
-> [!NOTE]
-> Make sure you open VS Code from the project root so it automatically detects the environment created by uv sync.
-
-Launch VS Code in the project root folder:
-
-```bash
-code .
-```
-
-Then open a notebook and select the Python environment created by `uv sync` as the kernel.
-
-## References & Further Reading
-
-- [**House Sales in King County dataset**](https://www.kaggle.com/datasets/harlfoxem/housesalesprediction): The source dataset, with column descriptions and community notebooks.
-- [**Pandas user guide**](https://pandas.pydata.org/docs/user_guide/index.html): The official guide to data manipulation with pandas.
-- [**Seaborn tutorial**](https://seaborn.pydata.org/tutorial.html): Statistical data visualization in Python.
-- [**SQLAlchemy documentation**](https://docs.sqlalchemy.org/en/20/): The database toolkit used to query PostgreSQL from Python.
-- [**Hypothesis generation for EDA**](https://www.analyticsvidhya.com/blog/2020/11/an-efficient-way-of-performing-eda-hypothesis-generation/): How to form research questions and hypotheses before diving into the data.
-- [**EDA Checklist**](https://github.com/neuefische/datascience-infographics/blob/main/EDA_Checklist.md): A phase-by-phase checklist for working through an exploratory analysis.
-- [**Detailed EDA with Python**](https://www.kaggle.com/code/ekami66/detailed-exploratory-data-analysis-with-python): A worked example of a thorough EDA notebook on real data.
-- [**Tips for data science presentations**](https://www.dataknowsall.com/storytelling.html): Storytelling techniques for presenting results to a non-technical audience.
+Maryam Sajedi, neuefische Data Science Bootcamp
